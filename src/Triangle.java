@@ -1,5 +1,5 @@
 public class Triangle {
-  Vec3d[] points = new Vec3d[3];
+  Vec3d[] points;
 
   //constructors
   public Triangle(){
