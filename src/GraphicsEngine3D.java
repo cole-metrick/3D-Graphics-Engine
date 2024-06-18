@@ -99,6 +99,7 @@ public class GraphicsEngine3D extends PixelGameEngine{
     return true;
   }
 
+  /* Move the matrix building outside of this method to save memory and time */
   public boolean OnUserUpdate(float fElapsedTime){
     Clear(BLACK);
 
@@ -134,9 +135,6 @@ public class GraphicsEngine3D extends PixelGameEngine{
       Vec3d[] rotZXPoints = new Vec3d[]{vecRotZX0, vecRotZX1, vecRotZX2};
       Triangle triRotatedZX = new Triangle(rotZXPoints);
 
-
-
-      //Triangle triTranslated = new Triangle(triRotatedZX.points);
       Triangle triTranslated = triRotatedZX;
       triTranslated.points[0].z = triRotatedZX.points[0].z + 3f;
       triTranslated.points[1].z = triRotatedZX.points[1].z + 3f;
