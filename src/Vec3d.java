@@ -11,4 +11,8 @@ public class Vec3d {
     this.y = y;
     this.z = z;
   }
+
+  public void printVec3d(){
+    System.out.println(String.valueOf(x) + ", " + String.valueOf(y) + ", " + String.valueOf(z));
+  }
 }

@@ -1,12 +1,13 @@
 import java.awt.Color;
 import java.util.Vector;
+import java.lang.Math;
 
 public class GraphicsEngine3D extends PixelGameEngine{
 
   public static final Color BLACK = new Color(0);
   public static final Color WHITE = new Color(255,255,255);
-  public Mesh meshCube = new Mesh();
-  public Mat4x4 matProj = new Mat4x4();
+  private Mesh meshCube = new Mesh();
+  private Mat4x4 matProj = new Mat4x4();
   
   public GraphicsEngine3D(String sTitle, int width, int height, int scaleX, int scaleY) {
     super(sTitle, width, height, scaleX, scaleY);
@@ -80,9 +81,9 @@ public class GraphicsEngine3D extends PixelGameEngine{
     float fFar = 1000f;
     double fFov = 90f;
     float fAspectRatio = (float)ScreenHeight() / (float)ScreenWidth();
-    float fFovRad = (float)Math.toRadians(fFov);
+    float fFovRad = 1f / (float)Math.tan(fFov *.5 / 180f * Math.PI);
 
-    Mat4x4 matProj = new Mat4x4();
+
     matProj.m[0][0] = fAspectRatio * fFovRad;
     matProj.m[1][1] = fFovRad;
     matProj.m[2][2] = fFar / (fFar - fNear);
@@ -96,21 +97,29 @@ public class GraphicsEngine3D extends PixelGameEngine{
     Clear(BLACK);
 
     for(Triangle tri : meshCube.tris){
-      Triangle triProjected = new Triangle(new Vec3d[]{MultiplyMatrixVector(tri.points[0], matProj), MultiplyMatrixVector(tri.points[1], matProj), MultiplyMatrixVector(tri.points[2], matProj)});
+      // Triangle triTranslated = new Triangle();
+      // triTranslated.points = tri.points;
+      // triTranslated.points[0].z = tri.points[0].z + 3f;
+      // triTranslated.points[1].z = tri.points[1].z + 3f;
+      // triTranslated.points[2].z = tri.points[2].z + 3f;
+      
+      Triangle triProjected = new Triangle();
+      Vec3d vecProjected0 = MultiplyMatrixVector(tri.points[0], matProj);
+      Vec3d vecProjected1 = MultiplyMatrixVector(tri.points[1], matProj);
+      Vec3d vecProjected2 = MultiplyMatrixVector(tri.points[2], matProj);
+      Vec3d[] projectedPoints = new Vec3d[]{vecProjected0, vecProjected1, vecProjected2};
+      triProjected.points = projectedPoints;
+      
+      triProjected.points[0].x += 1f; triProjected.points[0].y += 1f;
+      triProjected.points[1].x += 1f; triProjected.points[1].y += 1f; 
+      triProjected.points[2].x += 1f; triProjected.points[2].y += 1f;
 
-      triProjected.points[0].x += 1f;
-      triProjected.points[0].y += 1f;
-      triProjected.points[1].x += 1f;
-      triProjected.points[1].y += 1f;
-      triProjected.points[2].x += 1f;
-      triProjected.points[2].y += 1f;
-
-      triProjected.points[0].x *= .5f * (float)ScreenWidth();
-      triProjected.points[0].y *= .5f * (float)ScreenHeight();
-      triProjected.points[1].x *= .5f * (float)ScreenWidth();
-      triProjected.points[1].y *= .5f * (float)ScreenHeight();
-      triProjected.points[2].x *= .5f * (float)ScreenWidth();
-      triProjected.points[2].y *= .5f * (float)ScreenHeight();
+      triProjected.points[0].x *= (.5f * (float)ScreenWidth());
+      triProjected.points[0].y *= (.5f * (float)ScreenHeight());
+      triProjected.points[1].x *= (.5f * (float)ScreenWidth());
+      triProjected.points[1].y *= (.5f * (float)ScreenHeight());
+      triProjected.points[2].x *= (.5f * (float)ScreenWidth());
+      triProjected.points[2].y *= (.5f * (float)ScreenHeight());
 
       DrawTriangle(WHITE, triProjected.points[0].x, triProjected.points[0].y, triProjected.points[1].x, triProjected.points[1].y, triProjected.points[2].x, triProjected.points[2].y);
     }
@@ -120,12 +129,12 @@ public class GraphicsEngine3D extends PixelGameEngine{
 
   private Vec3d MultiplyMatrixVector(Vec3d vec, Mat4x4 mat){
     Vec3d output = new Vec3d();
-    output.x = (vec.x * mat.m[0][0]) + (vec.y * mat.m[1][0]) + (vec.z * mat.m[2][0]) + mat.m[3][0];
-    output.y = (vec.x * mat.m[0][1]) + (vec.y * mat.m[1][1]) + (vec.z * mat.m[2][1]) + mat.m[3][1];
-    output.z = (vec.x * mat.m[0][2]) + (vec.y * mat.m[1][2]) + (vec.z * mat.m[2][2]) + mat.m[3][2];
-    float w = (vec.x * mat.m[0][3]) + (vec.y * mat.m[1][3]) + (vec.z * mat.m[2][3]) + mat.m[3][3];
+    output.x = vec.x * mat.m[0][0] + vec.y * mat.m[1][0] + vec.z * mat.m[2][0] + mat.m[3][0];
+    output.y = vec.x * mat.m[0][1] + vec.y * mat.m[1][1] + vec.z * mat.m[2][1] + mat.m[3][1];
+    output.z = vec.x * mat.m[0][2] + vec.y * mat.m[1][2] + vec.z * mat.m[2][2] + mat.m[3][2];
+    float w = vec.x * mat.m[0][3] + vec.y * mat.m[1][3] + vec.z * mat.m[2][3] + mat.m[3][3];
 
-    if (w != 0){
+    if (w != 0f){
       output.x /= w;
       output.y /= w;
       output.z /= w;
@@ -136,7 +145,7 @@ public class GraphicsEngine3D extends PixelGameEngine{
 
 
   public static void main(String[] args){
-    GraphicsEngine3D demo = new GraphicsEngine3D("3D Demo", 256, 240, 1, 1);
+    GraphicsEngine3D demo = new GraphicsEngine3D("3D Demo", 256, 240, 4, 4);
     demo.start();
   }
 }
