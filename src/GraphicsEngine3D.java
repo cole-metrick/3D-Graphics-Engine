@@ -8,6 +8,7 @@ public class GraphicsEngine3D extends PixelGameEngine{
   public static final Color WHITE = new Color(255,255,255);
   private Mesh meshCube = new Mesh();
   private Mat4x4 matProj = new Mat4x4();
+  private float fTheta = 0;
   
   public GraphicsEngine3D(String sTitle, int width, int height, int scaleX, int scaleY) {
     super(sTitle, width, height, scaleX, scaleY);
@@ -15,6 +16,11 @@ public class GraphicsEngine3D extends PixelGameEngine{
   public GraphicsEngine3D(String sTitle, int maxFPS, int width, int height, int scaleX, int scaleY) {
     super(sTitle,maxFPS, width, height, scaleX, scaleY);
   }
+  public void DrawTriangle(Color c,float p1x,float p1y,float p2x,float p2y,float p3x,float p3y){
+    DrawLine(p1x, p1y, p2x, p2y, c);
+    DrawLine(p2x, p2y, p3x, p3y, c);
+    DrawLine(p3x, p3y, p1x, p1y, c);
+}
 
 
   public boolean OnUserCreate(){
@@ -96,19 +102,51 @@ public class GraphicsEngine3D extends PixelGameEngine{
   public boolean OnUserUpdate(float fElapsedTime){
     Clear(BLACK);
 
+    Mat4x4 matRotZ = new Mat4x4();
+    Mat4x4 matRotX = new Mat4x4();
+    fTheta += .01f * fElapsedTime;
+
+    matRotZ.m[0][0] = (float)Math.cos(fTheta);
+    matRotZ.m[0][1] = (float)Math.sin(fTheta);
+    matRotZ.m[1][0] = (float)-Math.sin(fTheta);
+    matRotZ.m[1][1] = (float)Math.cos(fTheta);
+    matRotZ.m[2][2] = 1f;
+    matRotZ.m[3][3] = 1f;
+
+    matRotX.m[0][0] = 1;
+    matRotX.m[1][1] = (float)Math.cos(fTheta * .5f);
+    matRotX.m[1][2] = (float)Math.sin(fTheta * .5f);
+    matRotX.m[2][1] = (float)-Math.sin(fTheta * .5f);
+    matRotX.m[2][2] = (float)Math.cos(fTheta * .5f);
+    matRotX.m[3][3] = 1;
+
     for(Triangle tri : meshCube.tris){
-      // Triangle triTranslated = new Triangle();
-      // triTranslated.points = tri.points;
-      // triTranslated.points[0].z = tri.points[0].z + 3f;
-      // triTranslated.points[1].z = tri.points[1].z + 3f;
-      // triTranslated.points[2].z = tri.points[2].z + 3f;
+
+      Vec3d vecRotZ0 = MultiplyMatrixVector(tri.points[0], matRotZ);
+      Vec3d vecRotZ1 = MultiplyMatrixVector(tri.points[1], matRotZ);
+      Vec3d vecRotZ2 = MultiplyMatrixVector(tri.points[2], matRotZ);
+      Vec3d[] rotZPoints = new Vec3d[]{vecRotZ0, vecRotZ1, vecRotZ2};
+      Triangle triRotatedZ = new Triangle(rotZPoints);
+
+      Vec3d vecRotZX0 = MultiplyMatrixVector(triRotatedZ.points[0], matRotX);
+      Vec3d vecRotZX1 = MultiplyMatrixVector(triRotatedZ.points[1], matRotX);
+      Vec3d vecRotZX2 = MultiplyMatrixVector(triRotatedZ.points[2], matRotX);
+      Vec3d[] rotZXPoints = new Vec3d[]{vecRotZX0, vecRotZX1, vecRotZX2};
+      Triangle triRotatedZX = new Triangle(rotZXPoints);
+
+
+
+      //Triangle triTranslated = new Triangle(triRotatedZX.points);
+      Triangle triTranslated = triRotatedZX;
+      triTranslated.points[0].z = triRotatedZX.points[0].z + 3f;
+      triTranslated.points[1].z = triRotatedZX.points[1].z + 3f;
+      triTranslated.points[2].z = triRotatedZX.points[2].z + 3f;
       
-      Triangle triProjected = new Triangle();
-      Vec3d vecProjected0 = MultiplyMatrixVector(tri.points[0], matProj);
-      Vec3d vecProjected1 = MultiplyMatrixVector(tri.points[1], matProj);
-      Vec3d vecProjected2 = MultiplyMatrixVector(tri.points[2], matProj);
+      Vec3d vecProjected0 = MultiplyMatrixVector(triTranslated.points[0], matProj);
+      Vec3d vecProjected1 = MultiplyMatrixVector(triTranslated.points[1], matProj);
+      Vec3d vecProjected2 = MultiplyMatrixVector(triTranslated.points[2], matProj);
       Vec3d[] projectedPoints = new Vec3d[]{vecProjected0, vecProjected1, vecProjected2};
-      triProjected.points = projectedPoints;
+      Triangle triProjected = new Triangle(projectedPoints);
       
       triProjected.points[0].x += 1f; triProjected.points[0].y += 1f;
       triProjected.points[1].x += 1f; triProjected.points[1].y += 1f; 
@@ -145,7 +183,7 @@ public class GraphicsEngine3D extends PixelGameEngine{
 
 
   public static void main(String[] args){
-    GraphicsEngine3D demo = new GraphicsEngine3D("3D Demo", 256, 240, 4, 4);
+    GraphicsEngine3D demo = new GraphicsEngine3D("3D Demo", 500, 256, 240, 4, 4);
     demo.start();
   }
 }
