@@ -9,6 +9,7 @@ public class GraphicsEngine3D extends PixelGameEngine{
   private Mesh meshCube = new Mesh();
   private Mat4x4 matProj = new Mat4x4();
   private float fTheta = 0;
+  private Vec3d vCamera = new Vec3d();
   
   public GraphicsEngine3D(String sTitle, int width, int height, int scaleX, int scaleY) {
     super(sTitle, width, height, scaleX, scaleY);
@@ -20,7 +21,7 @@ public class GraphicsEngine3D extends PixelGameEngine{
     DrawLine(p1x, p1y, p2x, p2y, c);
     DrawLine(p2x, p2y, p3x, p3y, c);
     DrawLine(p3x, p3y, p1x, p1y, c);
-}
+  }
 
 
   public boolean OnUserCreate(){
@@ -61,8 +62,8 @@ public class GraphicsEngine3D extends PixelGameEngine{
     Triangle triTB = new Triangle(new Vec3d[]{point2,point7,point3});
 
     //Bottom Face
-    Triangle triBA = new Triangle(new Vec3d[]{point1,point5,point8});
-    Triangle triBB = new Triangle(new Vec3d[]{point1,point8,point4});
+    Triangle triBA = new Triangle(new Vec3d[]{point8,point5,point1});
+    Triangle triBB = new Triangle(new Vec3d[]{point8,point1,point4});
 
     //Putting all tris in the Vector
     Vector<Triangle> meshTris = new Vector<Triangle>();
@@ -139,25 +140,53 @@ public class GraphicsEngine3D extends PixelGameEngine{
       triTranslated.points[0].z = triRotatedZX.points[0].z + 3f;
       triTranslated.points[1].z = triRotatedZX.points[1].z + 3f;
       triTranslated.points[2].z = triRotatedZX.points[2].z + 3f;
-      
-      Vec3d vecProjected0 = MultiplyMatrixVector(triTranslated.points[0], matProj);
-      Vec3d vecProjected1 = MultiplyMatrixVector(triTranslated.points[1], matProj);
-      Vec3d vecProjected2 = MultiplyMatrixVector(triTranslated.points[2], matProj);
-      Vec3d[] projectedPoints = new Vec3d[]{vecProjected0, vecProjected1, vecProjected2};
-      Triangle triProjected = new Triangle(projectedPoints);
-      
-      triProjected.points[0].x += 1f; triProjected.points[0].y += 1f;
-      triProjected.points[1].x += 1f; triProjected.points[1].y += 1f; 
-      triProjected.points[2].x += 1f; triProjected.points[2].y += 1f;
 
-      triProjected.points[0].x *= (.5f * (float)ScreenWidth());
-      triProjected.points[0].y *= (.5f * (float)ScreenHeight());
-      triProjected.points[1].x *= (.5f * (float)ScreenWidth());
-      triProjected.points[1].y *= (.5f * (float)ScreenHeight());
-      triProjected.points[2].x *= (.5f * (float)ScreenWidth());
-      triProjected.points[2].y *= (.5f * (float)ScreenHeight());
+      //normal vectors
+      Vec3d line1 = new Vec3d();
+      line1.x = triTranslated.points[1].x - triTranslated.points[0].x;
+      line1.y = triTranslated.points[1].y - triTranslated.points[0].y;
+      line1.z = triTranslated.points[1].z - triTranslated.points[0].z;
 
-      DrawTriangle(WHITE, triProjected.points[0].x, triProjected.points[0].y, triProjected.points[1].x, triProjected.points[1].y, triProjected.points[2].x, triProjected.points[2].y);
+      Vec3d line2 = new Vec3d();
+      line2.x = triTranslated.points[2].x - triTranslated.points[0].x;
+      line2.y = triTranslated.points[2].y - triTranslated.points[0].y;
+      line2.z = triTranslated.points[2].z - triTranslated.points[0].z;
+
+      Vec3d normal = new Vec3d();
+      normal.x = (line1.y * line2.z) - (line1.z * line2.y);
+      normal.y = (line1.z * line2.x) - (line1.x * line2.z);
+      normal.z = (line1.x * line2.y) - (line1.y * line2.x);
+
+      float length = (float)Math.sqrt((normal.x * normal.x) + (normal.y * normal.y) + (normal.z * normal.z));
+      normal.x /= length;
+      normal.y /= length;
+      normal.z /= length;
+      
+      //if(normal.z < 0)
+      if(normal.x * (triTranslated.points[0].x - vCamera.x) + 
+         normal.y * (triTranslated.points[0].y - vCamera.y) +
+         normal.z * (triTranslated.points[0].z - vCamera.z) < 0.0f)
+      {
+        Vec3d vecProjected0 = MultiplyMatrixVector(triTranslated.points[0], matProj);
+        Vec3d vecProjected1 = MultiplyMatrixVector(triTranslated.points[1], matProj);
+        Vec3d vecProjected2 = MultiplyMatrixVector(triTranslated.points[2], matProj);
+        Vec3d[] projectedPoints = new Vec3d[]{vecProjected0, vecProjected1, vecProjected2};
+        Triangle triProjected = new Triangle(projectedPoints);
+        
+        triProjected.points[0].x += 1f; triProjected.points[0].y += 1f;
+        triProjected.points[1].x += 1f; triProjected.points[1].y += 1f; 
+        triProjected.points[2].x += 1f; triProjected.points[2].y += 1f;
+
+        triProjected.points[0].x *= (.5f * (float)ScreenWidth());
+        triProjected.points[0].y *= (.5f * (float)ScreenHeight());
+        triProjected.points[1].x *= (.5f * (float)ScreenWidth());
+        triProjected.points[1].y *= (.5f * (float)ScreenHeight());
+        triProjected.points[2].x *= (.5f * (float)ScreenWidth());
+        triProjected.points[2].y *= (.5f * (float)ScreenHeight());
+
+        FillTriangle(WHITE, triProjected.points[0].x, triProjected.points[0].y, triProjected.points[1].x, triProjected.points[1].y, triProjected.points[2].x, triProjected.points[2].y);
+      }
+      
     }
     return true;
   }
@@ -181,7 +210,7 @@ public class GraphicsEngine3D extends PixelGameEngine{
 
 
   public static void main(String[] args){
-    GraphicsEngine3D demo = new GraphicsEngine3D("3D Demo", 500, 256, 240, 4, 4);
+    GraphicsEngine3D demo = new GraphicsEngine3D("3D Demo", 300, 256, 240, 4, 4);
     demo.start();
   }
 }
