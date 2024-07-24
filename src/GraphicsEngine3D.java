@@ -167,6 +167,15 @@ public class GraphicsEngine3D extends PixelGameEngine{
          normal.y * (triTranslated.points[0].y - vCamera.y) +
          normal.z * (triTranslated.points[0].z - vCamera.z) < 0.0f)
       {
+        //Light
+        Vec3d lightDirection = new Vec3d(0.0f, 0.0f, -1.0f);
+        float l = (float)Math.sqrt(lightDirection.x * lightDirection.x + lightDirection.y * lightDirection.y + lightDirection.z * lightDirection.z);
+        lightDirection.x /= l;
+        lightDirection.y /= l;
+        lightDirection.z /= l;
+
+        float dotProd = normal.x * lightDirection.x + normal.y * lightDirection.y + normal.z * lightDirection.z;
+
         Vec3d vecProjected0 = MultiplyMatrixVector(triTranslated.points[0], matProj);
         Vec3d vecProjected1 = MultiplyMatrixVector(triTranslated.points[1], matProj);
         Vec3d vecProjected2 = MultiplyMatrixVector(triTranslated.points[2], matProj);
